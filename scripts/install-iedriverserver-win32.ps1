@@ -1,0 +1,2 @@
+Invoke-WebRequest https://selenium-release.storage.googleapis.com/3.9/IEDriverServer_Win32_3.9.0.zip -OutFile IEDriverServer_Win32_3.9.0.zip
+expand-archive -path ./IEDriverServer_Win32_3.9.0.zip -destinationpath c:\tools\selenium

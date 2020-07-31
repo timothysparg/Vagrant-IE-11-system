@@ -1,0 +1,1 @@
+cinst vcredist-all jdk8 jre8 selenium selenium-edge-driver selenium-gecko-driver firefox selenium-chrome-driver googlechrome nssm autologon -y
