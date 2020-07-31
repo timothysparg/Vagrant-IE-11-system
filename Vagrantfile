@@ -8,9 +8,9 @@ Vagrant.configure("2") do |config|
    
     boxes = Open3.capture3("vagrant box list")
     # if the zip file exists, we're most probably working on adding it
-    zipFile = system('ls MSEdge.Win10.Vagrant.zip')
+    files = Open3.capture3('ls')
 
-    if !boxes.include? "groknull/EdgeOnWindows10" and !zipFile 
+    if !boxes.include? "groknull/EdgeOnWindows10" && !files.include? "MSEdge.Win10.Vagrant.zip"
       `wget https://az792536.vo.msecnd.net/vms/VMBuild_20190311/Vagrant/MSEdge/MSEdge.Win10.Vagrant.zip`
       puts '📦 unzipping box '
       `unzip MSEdge.Win10.Vagrant.zip`
@@ -22,6 +22,12 @@ Vagrant.configure("2") do |config|
       puts '👍'
       puts 'and now let normal vagrant up processing begin...'
     end
+  end
+
+  config.trigger.after :up do |trigger|
+    trigger.name = "Retrieve IP address"
+    ipAddress = `vagrant winrm -c "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"`
+    puts '🖥 IP Address: #{ipAddress}'
   end
 
   config.vm.box = "groknull/EdgeOnWindows10"
