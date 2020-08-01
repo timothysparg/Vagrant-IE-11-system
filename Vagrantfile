@@ -1,36 +1,54 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
-require 'open3'
+winBoxUrl = "https://az792536.vo.msecnd.net/vms/VMBuild_20190311/Vagrant/MSEdge/MSEdge.Win10.Vagrant.zip"
+zipFileName = "MSEdge.Win10.Vagrant.zip"
+boxName = "groknull/EdgeOnWindows10"
+boxFilename = "MSEdge - Win10.box"
 
 Vagrant.configure("2") do |config|
   config.trigger.before :up do |trigger|
     trigger.name = "download IE11 Windows box"
-   
-    boxes = Open3.capture3("vagrant box list")
-    # if the zip file exists, we're most probably working on adding it
-    files = Open3.capture3('ls')
+    trigger.ruby do |env,machine|
+      boxExists = (env.boxes.all.select{|box| box[0] == boxName}).any?
+      confirm = nil
+      if !boxExists
+        until ["Y", "y", "N", "n"].include?(confirm)
+          puts "❓ No EdgeOnWindows10 box locally, would you like to install it? (Y/N) "
+          confirm = STDIN.gets.chomp
+        end
+        if confirm.upcase == "Y" 
+          # Prefixed UI for prettiness
+          ui = Vagrant::UI::Prefixed.new(env.ui, "")
 
-    if !boxes.include? "groknull/EdgeOnWindows10" && !files.include? "MSEdge.Win10.Vagrant.zip"
-      `wget https://az792536.vo.msecnd.net/vms/VMBuild_20190311/Vagrant/MSEdge/MSEdge.Win10.Vagrant.zip`
-      puts '📦 unzipping box '
-      `unzip MSEdge.Win10.Vagrant.zip`
-      puts '🏠 adding box'
-      `vagrant box add --name groknull/EdgeOnWindows10 'MSEdge - Win10.box'`
-      puts '🧹 cleaning up'
-      `rm MSEdge.Win10.Vagrant.zip`
-      `rm -rf 'MSEdge - Win10.box'`
-      puts '👍'
-      puts 'and now let normal vagrant up processing begin...'
-    end
+          # Start by downloading the file using the standard mechanism
+          ui.output("🌐 downloading #{boxName}")
+          ui.detail("#{winBoxUrl}")
+          dl = Vagrant::Util::Downloader.new(winBoxUrl, zipFileName, ui: ui)
+          dl.download!
+          puts '📦 unzipping box '
+          `unzip #{zipFileName}`
+          puts '🏠 adding box'
+          box = env.boxes.add(boxFilename, boxName, "0.0.1", :metadata_url => "metadata.json")
+          machine.box = box
+          puts '🛀 cleaning up'
+          `rm #{zipFileName}`
+          `rm -rf "#{boxFilename}"`
+          puts '⚡️ now let normal vagrant up processing begin'
+        end
+      end
+    end   
   end
 
   config.trigger.after :up do |trigger|
-    trigger.name = "Retrieve IP address"
-    ipAddress = `vagrant winrm -c "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"`
-    puts '🖥 IP Address: #{ipAddress}'
+    trigger.info = "Retrieve IP address"
+    trigger.ruby do |env,machine|
+      ipAddress = `vagrant winrm -c "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"`
+      puts '🖥 IP Address: #{ipAddress}'
+    end    
   end
 
   config.vm.box = "groknull/EdgeOnWindows10"
+  config.vm.box_version = "0.0.1"
   # config.vm.box_url = "./metadata.json"
   config.vm.guest = :windows
   config.vm.communicator = "winrm"

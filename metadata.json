@@ -1,0 +1,14 @@
+{
+    "name": "groknull/EdgeOnWindows10",
+    "description": "This box contains Ubuntu 18.04 LTS 64-bit.",
+    "versions": [
+      {
+        "version": "0.0.1",
+        "providers": [
+          {
+            "name": "virtualbox"
+          }
+        ]
+      }
+    ]
+  }
