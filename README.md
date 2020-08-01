@@ -27,10 +27,12 @@ The Ip address of the guest machine can be found retrieved with the following co
     - WinRM is slow to initialise; it depends on other windows services, so it will be the last to start - have another coffee
     - Starts installing all the software we need
     - The system will show the desktop while it is still initialising, this might take some time; Thanks WinRM.
+    - This whole process could take up to 40 minutes
 
 1. Note the IP address provided at the end of the script, it might be of interest to you
 
-1. After the initial provision and boot, `vagrant up` will be much faster.
+1. After the initial provision and boot, `vagrant up` will be much faster (about 3 mins). 
 
 ## Notes
 - The MS vagrant box does not include a `metadata.json` file, so in order to make this a one step process, we do some hacky stuff as part of the vagrant up
+- If you're going to leave your laptop unattended beware that it will hibernate; `caffeinate -i` is a simple solution for this
