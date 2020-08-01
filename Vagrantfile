@@ -1,5 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+
 winBoxUrl = "https://az792536.vo.msecnd.net/vms/VMBuild_20190311/Vagrant/MSEdge/MSEdge.Win10.Vagrant.zip"
 zipFileName = "MSEdge.Win10.Vagrant.zip"
 boxName = "groknull/EdgeOnWindows10"
@@ -10,8 +11,8 @@ Vagrant.configure("2") do |config|
     trigger.name = "download IE11 Windows box"
     trigger.ruby do |env,machine|
       boxExists = (env.boxes.all.select{|box| box[0] == boxName}).any?
-      confirm = nil
       if !boxExists
+        confirm = nil
         until ["Y", "y", "N", "n"].include?(confirm)
           puts "❓ No EdgeOnWindows10 box locally, would you like to install it? (Y/N) "
           confirm = STDIN.gets.chomp
@@ -25,15 +26,15 @@ Vagrant.configure("2") do |config|
           ui.detail("#{winBoxUrl}")
           dl = Vagrant::Util::Downloader.new(winBoxUrl, zipFileName, ui: ui)
           dl.download!
-          puts '📦 unzipping box '
+          puts ' 📦 unzipping box '
           `unzip #{zipFileName}`
-          puts '🏠 adding box'
+          puts ' 🏠 adding box'
           box = env.boxes.add(boxFilename, boxName, "0.0.1", :metadata_url => "metadata.json")
           machine.box = box
-          puts '🛀 cleaning up'
+          puts ' 🛀 cleaning up'
           `rm #{zipFileName}`
           `rm -rf "#{boxFilename}"`
-          puts '⚡️ now let normal vagrant up processing begin'
+          puts ' ⚡️ now let normal vagrant up processing begin'
         end
       end
     end   
@@ -42,8 +43,14 @@ Vagrant.configure("2") do |config|
   config.trigger.after :up do |trigger|
     trigger.info = "Retrieve IP address"
     trigger.ruby do |env,machine|
-      ipAddress = `vagrant winrm -c "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"`
-      puts '🖥 IP Address: #{ipAddress}'
+      cmd = "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"
+      machine.communicate.execute(cmd, { shell: :powershell }) do |type, data|
+        if type == :stderr
+          STDERR.puts(data)
+        else
+          puts (" 🖥   IP Address: #{data}")
+        end
+      end
     end    
   end
 
@@ -74,6 +81,9 @@ Vagrant.configure("2") do |config|
   # config.winrm.port = '55985' 
   config.winrm.username = "IEUser"
   config.winrm.password = "Passw0rd!"
+  config.winrm.retry_limit = 30
+  config.winrm.retry_delay = 10
+  # config.winrm.max_tries = 20
 
   config.vm.provider "virtualbox" do |v|
     v.gui = true

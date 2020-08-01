@@ -24,11 +24,13 @@ The Ip address of the guest machine can be found retrieved with the following co
     - Unzips the box
     - Adds the box to the local Vagrant registry
     - Creates your VM
-    - WinRM seems pretty slow to initialise on VM reboots, have another coffee
+    - WinRM is slow to initialise; it depends on other windows services, so it will be the last to start - have another coffee
     - Starts installing all the software we need
-    - When the  system has finished initialising it will login and selenium will be running in the  foreground
+    - The system will show the desktop while it is still initialising, this might take some time; Thanks WinRM.
 
 1. Note the IP address provided at the end of the script, it might be of interest to you
+
+1. After the initial provision and boot, `vagrant up` will be much faster.
 
 ## Notes
 - The MS vagrant box does not include a `metadata.json` file, so in order to make this a one step process, we do some hacky stuff as part of the vagrant up
