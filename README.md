@@ -33,6 +33,11 @@ The Ip address of the guest machine can be found retrieved with the following co
 
 1. After the initial provision and boot, `vagrant up` will be much faster (about 3 mins). 
 
+1. To shutdown call
+    ```shell
+    $> vagrant halt
+    ```
+
 ## Notes
 - The MS vagrant box does not include a `metadata.json` file, so in order to make this a one step process, we do some hacky stuff as part of the vagrant up
 - If you're going to leave your laptop unattended beware that it will hibernate; `caffeinate -i` is a simple solution for this

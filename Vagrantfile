@@ -10,33 +10,7 @@ Vagrant.configure("2") do |config|
   config.trigger.before :up do |trigger|
     trigger.name = "download IE11 Windows box"
     trigger.ruby do |env,machine|
-      boxExists = (env.boxes.all.select{|box| box[0] == boxName}).any?
-      if !boxExists
-        confirm = nil
-        until ["Y", "y", "N", "n"].include?(confirm)
-          puts "❓ No EdgeOnWindows10 box locally, would you like to install it? (Y/N) "
-          confirm = STDIN.gets.chomp
-        end
-        if confirm.upcase == "Y" 
-          # Prefixed UI for prettiness
-          ui = Vagrant::UI::Prefixed.new(env.ui, "")
-
-          # Start by downloading the file using the standard mechanism
-          ui.output("🌐 downloading #{boxName}")
-          ui.detail("#{winBoxUrl}")
-          dl = Vagrant::Util::Downloader.new(winBoxUrl, zipFileName, ui: ui)
-          dl.download!
-          puts ' 📦 unzipping box '
-          `unzip #{zipFileName}`
-          puts ' 🏠 adding box'
-          box = env.boxes.add(boxFilename, boxName, "0.0.1", :metadata_url => "metadata.json")
-          machine.box = box
-          puts ' 🛀 cleaning up'
-          `rm #{zipFileName}`
-          `rm -rf "#{boxFilename}"`
-          puts ' ⚡️ now let normal vagrant up processing begin'
-        end
-      end
+      provisionBox(env)
     end   
   end
 
@@ -46,12 +20,10 @@ Vagrant.configure("2") do |config|
 
   config.vm.box = "groknull/EdgeOnWindows10"
   config.vm.box_version = "0.0.1"
-  # config.vm.box_url = "./metadata.json"
   config.vm.guest = :windows
   config.vm.communicator = "winrm"
   config.vm.define "Windows-Browsers"
   config.vm.hostname = "win10"
-  # config.vm.hostname = "win10.test"
   config.vm.network "private_network", type: "dhcp", :name => 'vboxnet2', :adapter => 2
   config.vm.network "forwarded_port", guest: 3389, host: 3389
   config.vm.network "forwarded_port", guest: 4444, host: 4444
@@ -65,15 +37,11 @@ Vagrant.configure("2") do |config|
   # restart to allow selenium to start in the user session 
   # and for whatever other windows things that need it
   config.vm.provision "shell", path: "scripts/autologon.ps1", reboot: true
-  # config.vm.provision "shell", path: "scripts/setResolution.ps1", powershell_elevated_interactive: true
 
-  # config.winrm.host = 'win10.test'
-  # config.winrm.port = '55985' 
   config.winrm.username = "IEUser"
   config.winrm.password = "Passw0rd!"
   config.winrm.retry_limit = 30
   config.winrm.retry_delay = 10
-  # config.winrm.max_tries = 20
 
   config.vm.provider "virtualbox" do |v|
     v.gui = true
@@ -96,4 +64,50 @@ def retrieveIPAddress(trigger)
       end
     end
   end  
+end
+
+def provisionBox(env)
+  boxExists = (env.boxes.all.select{|box| box[0] == boxName}).any?
+  if !boxExists
+    confirm = nil
+    until ["Y", "y", "N", "n"].include?(confirm)
+      puts "❓ No EdgeOnWindows10 box locally, would you like to install it? (Y/N) "
+      confirm = STDIN.gets.chomp
+    end
+    if confirm.upcase == "Y" 
+      fetchBox()
+      unzipBox()
+      addBoxToLocalRegistry(env)
+      cleanUpBox()
+      puts ' ⚡️ now let normal vagrant up processing begin'
+    end
+  end
+end
+
+def fetchBox()
+  # Prefixed UI for prettiness
+  ui = Vagrant::UI::Prefixed.new(env.ui, "")
+
+  # Start by downloading the file using the standard mechanism
+  ui.output("🌐 downloading #{boxName}")
+  ui.detail("#{winBoxUrl}")
+  dl = Vagrant::Util::Downloader.new(winBoxUrl, zipFileName, ui: ui)
+  dl.download!
+end
+
+def unzipBox()
+  puts ' 📦 unzipping box '
+  `unzip #{zipFileName}`
+end
+
+def addBoxToLocalRegistry(env)
+  puts ' 🏠 adding box'
+  box = env.boxes.add(boxFilename, boxName, "0.0.1", :metadata_url => "metadata.json")
+  machine.box = box
+end
+
+def cleanUpBox()
+  puts ' 🛀 cleaning up'
+  `rm #{zipFileName}`
+  `rm -rf "#{boxFilename}"`
 end
