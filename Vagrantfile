@@ -41,17 +41,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.trigger.after :up do |trigger|
-    trigger.info = "Retrieve IP address"
-    trigger.ruby do |env,machine|
-      cmd = "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"
-      machine.communicate.execute(cmd, { shell: :powershell }) do |type, data|
-        if type == :stderr
-          STDERR.puts(data)
-        else
-          puts (" 🖥   IP Address: #{data}")
-        end
-      end
-    end    
+    retrieveIPAddress(trigger)  
   end
 
   config.vm.box = "groknull/EdgeOnWindows10"
@@ -92,4 +82,18 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--vram", "64"]  
     v.customize ['modifyvm', :id, '--clipboard', 'bidirectional'] 
   end
+end
+
+def retrieveIPAddress(trigger)
+  trigger.info = "Retrieve IP address"
+  trigger.ruby do |env,machine|
+    cmd = "Get-NetIPAddress  -InterfaceAlias 'Ethernet 2' | Select -ExpandProperty IPV4Address"
+    machine.communicate.execute(cmd, { shell: :powershell }) do |type, data|
+      if type == :stderr
+        STDERR.puts(data)
+      else
+        puts (" 🖥   IP Address: #{data}")
+      end
+    end
+  end  
 end
