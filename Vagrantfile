@@ -71,11 +71,10 @@ end
 def provisionBox(env, machine)
   ui = Vagrant::UI::Prefixed.new(env.ui, "")
   
-  machineExists = (env.machine_index.each{|entry| entry.name == $machineName}).any?
+  machineState = machine.state.short_description
   boxExists = (env.boxes.all.select{|box| box[0] == $boxName}).any?
-   
-  if false
-    ui.output(" ✅ #{env.machine_index.each{|entry| entry.name == $machineName}}")
+
+  if machineState != 'not created'
     ui.output(" ✅ #{$machineName} machine exists, won't prompt to download Box")
   elsif boxExists
     ui.output(" ✅ #{$boxName} exists locally")
