@@ -1,16 +1,17 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+$boxFile = "MSEdge - Win10.box"
+$boxName = "groknull/EdgeOnWindows10"
+$boxUrl = "https://az792536.vo.msecnd.net/vms/VMBuild_20190311/Vagrant/MSEdge/MSEdge.Win10.Vagrant.zip"
+$machineName = "Windows-Browsers"
+$zipFile = "MSEdge.Win10.Vagrant.zip"
+
 Vagrant.configure("2") do |config|
   config.trigger.before :up do |trigger|
     trigger.name = "download Windows Browser box"
     trigger.ruby do |env, machine|
-      provisionBox(env, machine,
-                  "groknull/EdgeOnWindows10",
-                  "https://az792536.vo.msecnd.net/vms/VMBuild_20190311/Vagrant/MSEdge/MSEdge.Win10.Vagrant.zip",
-                  "MSEdge.Win10.Vagrant.zip",
-                  "MSEdge - Win10.box"
-                  )
+      provisionBox(env, machine,)
     end   
   end
 
@@ -18,11 +19,11 @@ Vagrant.configure("2") do |config|
     retrieveIPAddress(trigger)  
   end
 
-  config.vm.box = "groknull/EdgeOnWindows10"
+  config.vm.box = $boxName
   config.vm.box_version = "0.0.1"
   config.vm.guest = :windows
   config.vm.communicator = "winrm"
-  config.vm.define "Windows-Browsers"
+  config.vm.define $machineName
   config.vm.hostname = "win10"
   config.vm.network "private_network", type: "dhcp", :name => 'vboxnet2', :adapter => 2
   config.vm.network "forwarded_port", guest: 3389, host: 3389
@@ -67,53 +68,54 @@ def retrieveIPAddress(trigger)
   end  
 end
 
-def provisionBox(env, machine, boxName, boxUrl, zipFile, boxFile)
+def provisionBox(env, machine)
   ui = Vagrant::UI::Prefixed.new(env.ui, "")
   
-  machineExists = (env.machine_index.each{|entry| entry.name == 'Windows-Browsers'}).any?
-  boxExists = (env.boxes.all.select{|box| box[0] == boxName}).any?
+  machineExists = (env.machine_index.each{|entry| entry.name == $machineName}).any?
+  boxExists = (env.boxes.all.select{|box| box[0] == $boxName}).any?
    
-  if machineExists
-    ui.output(" ✅ Windows-Browsers machine exists, won't prompt to download Box")
+  if false
+    ui.output(" ✅ #{env.machine_index.each{|entry| entry.name == $machineName}}")
+    ui.output(" ✅ #{$machineName} machine exists, won't prompt to download Box")
   elsif boxExists
-    ui.output(" ✅ EdgeOnWindows10 exists locally")
+    ui.output(" ✅ #{$boxName} exists locally")
   else
     confirm = nil
     until ["Y", "y", "N", "n"].include?(confirm)
-      ui.output(" ❓ No EdgeOnWindows10 box locally, would you like to install it? (Y/N) ")
+      ui.output(" ❓ No #{$boxName} box locally, would you like to install it? (Y/N) ")
       confirm = STDIN.gets.chomp
     end
     if confirm.upcase == "Y" 
-      fetchBox(ui, boxName, boxUrl, zipFile)
-      unzipBox(ui, zipFile)
-      addBoxToLocalRegistry(ui, env, machine, boxFile, boxName)
-      cleanUpBox(ui, zipFile, boxFile)
+      fetchBox(ui)
+      unzipBox(ui)
+      addBoxToLocalRegistry(ui, env, machine)
+      cleanUpBox(ui)
       puts ' ⚡️ now let normal vagrant up processing begin'
     end
   end
 end
 
-def fetchBox(ui, name, url, zip)
+def fetchBox(ui)
   # Start by downloading the file using the standard mechanism
-  ui.output("🌐 downloading #{name}")
-  ui.detail("#{url}")
-  dl = Vagrant::Util::Downloader.new(url, zip, ui: ui)
+  ui.output("🌐 downloading #{$boxName}")
+  ui.detail("#{$boxUrl}")
+  dl = Vagrant::Util::Downloader.new($boxUrl, $zipFile, ui: ui)
   dl.download!
 end
 
-def unzipBox(ui, zip)
+def unzipBox(ui)
   ui.output(' 📦 unzipping box ')
-  `unzip #{zip}`
+  `unzip #{$zipFile}`
 end
 
-def addBoxToLocalRegistry(ui, env, machine, boxFile, boxName)
+def addBoxToLocalRegistry(ui, env, machine)
   ui.output(' 🏠 adding box')
-  box = env.boxes.add(boxFile , boxName, "0.0.1", :metadata_url => "metadata.json")
+  box = env.boxes.add($boxFile , $boxName, "0.0.1", :metadata_url => "metadata.json")
   machine.box = box
 end
 
-def cleanUpBox(ui, zip, box)
+def cleanUpBox(ui)
   ui.output(' 🛀 cleaning up')
-  `rm #{zip}`
-  `rm -rf "#{box}"`
+  `rm #{$zipFile}`
+  `rm -rf "#{$boxFile}"`
 end
