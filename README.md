@@ -28,16 +28,21 @@ The IP address of the guest machine is shown at the end of the `vagrant up` comm
     - Starts installing all the software we need
     - Will reboot the guest several times
     - The system will show the desktop while it is still initialising, this might take some time; Thanks WinRM.
-    - This whole process could take up to 40 minutes
+    - This whole process could take up to an hour
         - highly dependant on download speeds
 
 1. Note the IP address provided at the end of the script, it might be of interest to you
 
 1. After the initial provision and boot, `vagrant up` will be much faster (about 3 mins). 
 
-1. To shutdown call
+1. To shutdown
     ```shell
     $> vagrant halt
+    ```
+
+1. To remove the virtual machine
+    ```shell
+    $> vagrant destroy Windows-Browsers
     ```
 
 ## Notes
