@@ -1,6 +1,6 @@
 ### Vagrant IE 11 system
 
-A Window system with Chrome, Firefox, Edge (legacy) and IE11 installed on it 
+A Windows system with Chrome, Firefox, Edge (legacy) and IE11 installed on it 
 
 Tested on mac, but _should_ work on linux without changes.
 No idea about windows.
