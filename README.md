@@ -1,6 +1,9 @@
 ### Vagrant IE 11 system
 
-A Window system with Chrome, Firefox, Edge (legacy) and IE11 installed on it.
+A Window system with Chrome, Firefox, Edge (legacy) and IE11 installed on it 
+
+Tested on mac, but _should_ work on linux without changes.
+No idea about windows.
 
 On boot this machine auto logins in and starts a selenium server running on port 4444.
 
