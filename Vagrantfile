@@ -85,36 +85,68 @@ def provisionBox(env, machine)
       confirm = STDIN.gets.chomp
     end
     if confirm.upcase == "Y" 
-      fetchBox(ui)
-      unzipBox(ui)
-      addBoxToLocalRegistry(ui, env, machine)
-      cleanUpBox(ui)
-      puts ' ⚡️ now let normal vagrant up processing begin'
+      zip = fetch(ui)
+      box = unzip(ui, zip)
+      addBoxToLocalRegistry(ui, env, machine, box)
+      ui.output(' ⚡️ now let normal vagrant up processing begin')
     end
   end
 end
 
-def fetchBox(ui)
-  # Start by downloading the file using the standard mechanism
-  ui.output("🌐 downloading #{$boxName}")
+def fetch(ui)
+  zip = Tempfile.new([Shellwords.escape($boxName), ".zip"])
+  at_exit { FileUtils.remove_entry(zip)}
+
+  ui.output("🌐 downloading #{$boxName} to #{zip.path}")
   ui.detail("#{$boxUrl}")
-  dl = Vagrant::Util::Downloader.new($boxUrl, $zipFile, ui: ui)
+  dl = Vagrant::Util::Downloader.new($boxUrl, zip.path, ui: ui)
   dl.download!
+  return zip
 end
 
-def unzipBox(ui)
-  ui.output(' 📦 unzipping box ')
-  `unzip #{$zipFile}`
+def unzip(ui, zip)
+  box = Dir.mktmpdir()
+  at_exit { FileUtils.remove_entry(box)}
+
+  ui.output(' 📦 unzipping box')
+  `unzip '#{zip.path}' -d #{box}`
+  return box
 end
 
-def addBoxToLocalRegistry(ui, env, machine)
+def addBoxToLocalRegistry(ui, env, machine, box)
   ui.output(' 🏠 adding box')
-  box = env.boxes.add($boxFile , $boxName, "0.0.1", :metadata_url => "metadata.json")
+  
+  Dir.chdir(box)
+  boxFile = Dir.glob("*.box").first
+  metadataFile = Dir.glob("metadata.json").first
+  if(metadataFile == nil)
+    metadataFile= writeMetadataFile();
+  end
+  box = env.boxes.add(boxFile , $boxName, "0.0.1", :metadata_url => metadataFile.path)
   machine.box = box
 end
 
-def cleanUpBox(ui)
-  ui.output(' 🛀 cleaning up')
-  `rm #{$zipFile}`
-  `rm -rf "#{$boxFile}"`
+def writeMetadataFile()
+  file = Tempfile.new
+  at_exit { FileUtils.remove_entry(file)}
+
+  content = <<~METADATA
+  {
+    "name": "#{$boxName}",
+    "description": "Windows IE 11 and legacy Edge",
+    "versions": [
+      {
+        "version": "0.0.1",
+        "providers": [
+          {
+            "name": "virtualbox"
+          }
+        ]
+      }
+    ]
+  }              
+  METADATA
+  
+  File.write(file, content)
+  return file
 end
