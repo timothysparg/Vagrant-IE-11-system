@@ -26,7 +26,7 @@ Vagrant.configure("2") do |config|
   config.vm.communicator = "winrm"
   config.vm.define $machineName
   config.vm.hostname = "win10"
-  config.vm.network "private_network", type: "dhcp", :name => 'vboxnet2', :adapter => 2
+  config.vm.network "private_network", type: "dhcp"
   config.vm.network "forwarded_port", guest: 3389, host: 3389
   config.vm.network "forwarded_port", guest: 4444, host: 4444
   config.vbguest.auto_update = false
@@ -118,7 +118,7 @@ def unzip(zip)
   return box
 end
 
-def addBoxToLocalRegistry(ui, env, machine, box)
+def addBoxToLocalRegistry(env, machine, box)
   Dir.chdir(box)
   boxFile = Dir.glob("*.box").first
   metadataFile = Dir.glob("metadata.json").first
@@ -152,4 +152,12 @@ def writeMetadataFile()
   
   File.write(file, content)
   return file
+end
+
+# Without this we seem ro run into some odd issues around creating a private host-guest network
+# https://github.com/hashicorp/vagrant/issues/8878#issuecomment-345112810
+class VagrantPlugins::ProviderVirtualBox::Action::Network
+  def dhcp_server_matches_config?(dhcp_server, config)
+    true
+  end
 end

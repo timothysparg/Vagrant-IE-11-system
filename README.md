@@ -2,7 +2,7 @@
 
 A Windows system with Chrome, Firefox, Edge (legacy) and IE11 installed on it 
 
-Tested on mac, but _should_ work on linux without changes.
+Tested on Mac and Ubuntu 20.04.
 No idea about windows.
 
 On boot this machine auto logins in and starts a selenium server running on port 4444.
@@ -15,6 +15,12 @@ The IP address of the guest machine is shown at the end of the `vagrant up` comm
 1. install vagrant
     ```shell
     $> brew install vagrant
+    $> vagrant plugin install vagrant-vbguest
+    ```
+
+1. Additionally if you're on linux, we need to add Win-RM manually
+    ```shell
+    $> sudo gem install winrm winrm-elevated
     ```
 
 1. call vagrant
