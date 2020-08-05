@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
   config.trigger.before :up do |trigger|
     trigger.name = "download Windows Browser box"
     trigger.ruby do |env, machine|
-      provisionBox(env, machine,)
+      provisionBox(env, machine)
     end   
   end
 
@@ -86,9 +86,9 @@ def provisionBox(env, machine)
       confirm = STDIN.gets.chomp
     end
     if confirm.upcase == "Y" 
-      ui.output("🌐 downloading #{$boxName} to #{zip.path}")
+      ui.output("🌐 downloading #{$boxName}")
       ui.detail("#{$boxUrl}")
-      zip = fetch()
+      zip = fetch(ui)
 
       ui.output(' 📦 unzipping box')
       box = unzip(zip)
@@ -101,7 +101,7 @@ def provisionBox(env, machine)
   end
 end
 
-def fetch()
+def fetch(ui)
   zip = Tempfile.new([Shellwords.escape($boxName), ".zip"])
   at_exit { FileUtils.remove_entry(zip)}
 
